@@ -1,0 +1,639 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="習慣トラッカー"><meta name="theme-color" content="#080c10"><title>習慣トラッカー</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;800&display=swap" rel="stylesheet"></head><body><div id="app"></div><script>
+(function(){
+const S=document.createElement('style');
+S.textContent=[
+'*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}',
+':root{--bg:#080c10;--surface:#0f172a;--border:#1e293b;--text:#e2e8f0;--muted:#64748b;--dim:#475569;--green:#4ade80;--green-bg:#052e16;--blue:#60a5fa;--blue-bg:#0c1a2e;--orange:#f97316;--orange-bg:#1c0a00;--purple:#c084fc;--purple-bg:#1a0530}',
+'html,body{height:100%;background:var(--bg);color:var(--text);font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN",sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}',
+'#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:80px}',
+'.header{background:linear-gradient(135deg,#0f172a 0%,#1a2540 100%);padding:52px 20px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}',
+'.header-inner{display:flex;justify-content:space-between;align-items:center}',
+'.header-date{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}',
+'.header-title{font-size:22px;font-weight:800;letter-spacing:-0.5px}',
+'.progress-ring{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}',
+'.progress-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}',
+'.progress-ring-inner{width:44px;height:44px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--green);z-index:1}',
+'.nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border)}',
+'.nav-btn{flex:1;padding:13px 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:400;cursor:pointer;transition:all .2s;font-family:inherit}',
+'.nav-btn.active{border-bottom-color:var(--green);color:var(--green);font-weight:700}',
+'.content{padding:16px 16px 0}',
+'.summary-card{background:var(--surface);border-radius:12px;padding:14px 16px;margin-bottom:16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}',
+'.summary-label{font-size:13px;color:#94a3b8}',
+'.summary-value{font-size:20px;font-weight:800;color:var(--green)}',
+'.summary-value span{color:var(--dim);font-weight:400}',
+'.cat-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}',
+'.cat-group{margin-bottom:20px}',
+'.habit-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .18s;margin-bottom:8px;-webkit-tap-highlight-color:transparent;user-select:none}',
+'.habit-check{width:26px;height:26px;border-radius:50%;border:2px solid #334155;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s;font-size:14px}',
+'.habit-name{font-size:15px;font-weight:600;color:#94a3b8;transition:color .18s}',
+'.habit-sub{font-size:11px;color:var(--dim);margin-top:2px}',
+'.streak{margin-left:8px}',
+'.history-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}',
+'.history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}',
+'.history-name{font-size:14px;font-weight:600}',
+'.history-cat{font-size:11px;margin-top:2px}',
+'.history-rate{font-size:20px;font-weight:800}',
+'.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}',
+'.cal-dow{font-size:9px;color:var(--dim);text-align:center;padding-bottom:3px}',
+'.cal-day{aspect-ratio:1;border-radius:4px;background:var(--border);border:1px solid transparent;transition:background .1s}',
+'.cal-day.empty{background:transparent}',
+'.cal-day.unscheduled{background:rgba(30,41,59,.3);opacity:.3}',
+'.history-footer{display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--dim)}',
+'.add-btn{width:100%;padding:14px;background:linear-gradient(135deg,#166534,#14532d);border:none;border-radius:12px;color:var(--green);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:16px;font-family:inherit;letter-spacing:.5px;-webkit-tap-highlight-color:transparent}',
+'.form-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px}',
+'.form-title{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--green)}',
+'.form-input{width:100%;padding:10px 14px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:var(--text);font-size:14px;margin-bottom:12px;outline:none;font-family:inherit}',
+'.form-label{font-size:11px;color:var(--muted);margin-bottom:8px}',
+'.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}',
+'.chip{padding:6px 12px;border-radius:20px;border:1px solid #334155;background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;-webkit-tap-highlight-color:transparent}',
+'.dow-row{display:flex;gap:6px;margin-bottom:14px}',
+'.dow-btn{width:36px;height:36px;border-radius:50%;border:1px solid #334155;background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;-webkit-tap-highlight-color:transparent}',
+'.form-actions{display:flex;gap:10px}',
+'.btn-cancel{flex:1;padding:10px;background:transparent;border:1px solid #334155;border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit}',
+'.btn-save{flex:2;padding:10px;background:#166534;border:none;border-radius:8px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}',
+'.manage-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px}',
+'.manage-icon{font-size:20px}',
+'.manage-info{flex:1}',
+'.manage-name{font-size:14px;font-weight:600}',
+'.manage-freq{font-size:11px;color:var(--dim);margin-top:2px}',
+'.btn-delete{background:transparent;border:1px solid #334155;border-radius:8px;color:#ef4444;font-size:12px;padding:6px 10px;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}',
+'.btn-edit{background:transparent;border:1px solid #334155;border-radius:8px;color:#60a5fa;font-size:12px;padding:6px 10px;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;margin-right:6px}',
+'.manage-actions{display:flex;align-items:center}',
+'.io-section{margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}',
+'.io-title{font-size:12px;color:var(--muted);margin-bottom:10px;letter-spacing:1px}',
+'.io-row{display:flex;gap:8px}',
+'.btn-export{flex:1;padding:10px;background:#0c1a2e;border:1px solid #60a5fa;border-radius:8px;color:#60a5fa;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}',
+'.btn-import{flex:1;padding:10px;background:#1a0530;border:1px solid #c084fc;border-radius:8px;color:#c084fc;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}',
+'.import-area{width:100%;margin-top:10px;padding:10px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:var(--text);font-size:12px;font-family:monospace;resize:vertical;min-height:80px;outline:none;box-sizing:border-box}',
+'.btn-import-ok{width:100%;margin-top:8px;padding:10px;background:#2e1065;border:1px solid #c084fc;border-radius:8px;color:#c084fc;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}',
+'.notif-section{margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}',
+'.notif-title{font-size:12px;color:var(--muted);margin-bottom:10px;letter-spacing:1px}',
+'.notif-status{font-size:12px;padding:6px 10px;border-radius:20px;display:inline-block;margin-bottom:12px}',
+'.notif-status.on{background:#052e16;color:var(--green);border:1px solid var(--green)}',
+'.notif-status.off{background:#1c0a00;color:#f97316;border:1px solid #f97316}',
+'.notif-times{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}',
+'.notif-time-row{display:flex;align-items:center;gap:10px;background:#1e293b;border-radius:8px;padding:8px 12px}',
+'.notif-time-label{flex:1;font-size:16px;font-weight:700;letter-spacing:1px;color:var(--text)}',
+'.btn-del-time{background:transparent;border:1px solid #334155;border-radius:6px;color:#ef4444;font-size:12px;padding:4px 8px;cursor:pointer;font-family:inherit}',
+'.notif-add-row{display:flex;gap:8px;align-items:center}',
+'.notif-time-input{flex:1;padding:8px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:var(--text);font-size:15px;outline:none;font-family:inherit}',
+'.btn-add-time{padding:8px 14px;background:#052e16;border:1px solid var(--green);border-radius:8px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}',
+'.btn-notif-enable{width:100%;padding:11px;background:#052e16;border:1px solid var(--green);border-radius:8px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px}',
+'.notif-msg-input{width:100%;padding:8px 12px;margin-bottom:10px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:var(--text);font-size:13px;outline:none;font-family:inherit;box-sizing:border-box}',
+'.empty-state{text-align:center;color:var(--dim);padding:60px 0;font-size:14px;line-height:2}',
+'.date-nav{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:16px}',
+'.date-nav-btn{background:transparent;border:1px solid #334155;border-radius:8px;color:var(--text);font-size:18px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}',
+'.date-nav-btn:disabled{opacity:.3;cursor:default}',
+'.date-nav-label{font-size:14px;font-weight:700;color:var(--text);text-align:center;flex:1}',
+'.date-nav-today{font-size:11px;color:var(--green);margin-top:2px;cursor:pointer}',
+'@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}',
+'.fade-in{animation:fadeIn .25s ease}',
+].join('');
+document.head.appendChild(S);
+
+const CATS={
+  health:{icon:'💊',color:'#4ade80',bg:'#052e16',label:'健康習慣'},
+  study:{icon:'📚',color:'#60a5fa',bg:'#0c1a2e',label:'勉強・読書'},
+  fitness:{icon:'🏃',color:'#f97316',bg:'#1c0a00',label:'運動・フィットネス'},
+  other:{icon:'⭐',color:'#c084fc',bg:'#1a0530',label:'その他'},
+};
+const DOWS=['日','月','火','水','木','金','土'];
+const HABITS_KEY='ht_habits_v2';
+const HISTORY_KEY='ht_history_v2';
+const NOTIF_KEY='ht_notifications_v1';
+
+let state={
+  editingId:null,
+  showImport:false,
+  selectedDate:todayKey(),
+  notifTimes:JSON.parse(localStorage.getItem(NOTIF_KEY)||'{"times":["09:00","18:00"],"message":"今日の習慣を記録しましょう！","enabled":false}'),
+  habits:JSON.parse(localStorage.getItem(HABITS_KEY)||'null')||[
+    {id:1,name:'水を2L飲む',category:'health',frequency:'daily',days:[0,1,2,3,4,5,6]},
+    {id:2,name:'服薬',category:'health',frequency:'daily',days:[0,1,2,3,4,5,6]},
+    {id:3,name:'読書30分',category:'study',frequency:'weekly',days:[1,3,5]},
+    {id:4,name:'ウォーキング',category:'fitness',frequency:'weekly',days:[1,3,5,0]},
+  ],
+  history:JSON.parse(localStorage.getItem(HISTORY_KEY)||'{}'),
+  view:'today',
+  showForm:false,
+  form:{name:'',category:'health',frequency:'daily',days:[0,1,2,3,4,5,6]},
+};
+
+function save(){
+  localStorage.setItem(HABITS_KEY,JSON.stringify(state.habits));
+  localStorage.setItem(NOTIF_KEY,JSON.stringify(state.notifTimes));
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-35);
+  const ck=dateKey(cutoff);
+  Object.keys(state.history).forEach(k=>{if(k<ck)delete state.history[k];});
+  localStorage.setItem(HISTORY_KEY,JSON.stringify(state.history));
+}
+
+function dateKey(d){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function todayKey(){return dateKey(new Date());}
+function todayDow(){return new Date().getDay();}
+
+function getStatus(habitId,dk){
+  const v=state.history[dk]&&state.history[dk][habitId];
+  if(v===2)return 2;if(v===1)return 1;if(v===true)return 2;return 0;
+}
+
+function toggleForDate(habitId, dk){
+  if(!state.history[dk])state.history[dk]={};
+  const cur=getStatus(habitId,dk);
+  state.history[dk][habitId]=cur>=2?0:cur+1;
+  save();render();
+}
+
+function toggle(habitId){
+  toggleForDate(habitId, todayKey());
+}
+
+function getStreak(habit){
+  let streak=0;const today=new Date();
+  for(let i=0;i<60;i++){
+    const d=new Date(today);d.setDate(d.getDate()-i);
+    const dow=d.getDay();const dk=dateKey(d);
+    const sched=habit.frequency==='daily'||habit.days.includes(dow);
+    if(!sched)continue;
+    if(getStatus(habit.id,dk)>=1)streak++;else break;
+  }
+  return streak;
+}
+
+function getRate(habit){
+  let sched=0,points=0;
+  for(let i=0;i<30;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const dow=d.getDay();const dk=dateKey(d);
+    if(habit.frequency==='daily'||habit.days.includes(dow)){
+      sched++;
+      const s=getStatus(habit.id,dk);
+      if(s===2)points+=1;else if(s===1)points+=.5;
+    }
+  }
+  return sched===0?0:Math.round(points/sched*100);
+}
+
+function getLast30(){
+  const days=[];
+  for(let i=29;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d);}
+  return days;
+}
+
+function addHabit(){
+  if(!state.form.name.trim())return;
+  if(state.editingId!==null){
+    state.habits=state.habits.map(h=>h.id===state.editingId?{...state.form,id:h.id}:h);
+    state.editingId=null;
+  }else{
+    state.habits.push({...state.form,id:Date.now()});
+  }
+  state.form={name:'',category:'health',frequency:'daily',days:[0,1,2,3,4,5,6]};
+  state.showForm=false;save();render();
+}
+
+function startEdit(habit){
+  state.editingId=habit.id;
+  state.form={name:habit.name,category:habit.category,frequency:habit.frequency,days:[...habit.days]};
+  state.showForm=true;render();
+  setTimeout(()=>{document.querySelector('.form-card')?.scrollIntoView({behavior:'smooth',block:'start'});},50);
+}
+
+function deleteHabit(id){
+  if(!confirm('この習慣を削除しますか？'))return;
+  state.habits=state.habits.filter(h=>h.id!==id);
+  save();render();
+}
+
+function el(tag,attrs,...children){
+  const e=document.createElement(tag);
+  if(attrs)Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='style'&&typeof v==='object')Object.assign(e.style,v);
+    else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);
+    else e.setAttribute(k,v);
+  });
+  children.flat(Infinity).forEach(c=>{
+    if(c==null)return;
+    e.appendChild(typeof c==='string'?document.createTextNode(c):c);
+  });
+  return e;
+}
+
+function renderProgressRing(pct){
+  const r=26,cx=28,cy=28,circ=2*Math.PI*r;
+  const offset=circ-(pct/100)*circ;
+  const div=el('div',{class:'progress-ring'});
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('width','56');svg.setAttribute('height','56');
+  svg.setAttribute('viewBox','0 0 56 56');
+  svg.style.cssText='position:absolute;top:0;left:0;transform:rotate(-90deg)';
+  const bg=document.createElementNS(ns,'circle');
+  bg.setAttribute('cx',cx);bg.setAttribute('cy',cy);bg.setAttribute('r',r);
+  bg.setAttribute('fill','none');bg.setAttribute('stroke','#1e293b');bg.setAttribute('stroke-width','4');
+  const fg=document.createElementNS(ns,'circle');
+  fg.setAttribute('cx',cx);fg.setAttribute('cy',cy);fg.setAttribute('r',r);
+  fg.setAttribute('fill','none');fg.setAttribute('stroke','#4ade80');fg.setAttribute('stroke-width','4');
+  fg.setAttribute('stroke-dasharray',circ);fg.setAttribute('stroke-dashoffset',offset);
+  fg.setAttribute('stroke-linecap','round');
+  svg.appendChild(bg);svg.appendChild(fg);
+  div.appendChild(svg);
+  div.appendChild(el('div',{class:'progress-ring-inner'},pct+'%'));
+  return div;
+}
+
+function renderHeader(pct){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  return el('div',{class:'header'},
+    el('div',{class:'header-inner'},
+      el('div',{},
+        el('div',{class:'header-date'},dateStr),
+        el('div',{class:'header-title'},'習慣トラッカー')
+      ),
+      state.view==='today'?renderProgressRing(pct):null
+    )
+  );
+}
+
+function renderNav(){
+  return el('div',{class:'nav'},
+    ...(['today','history','manage'].map((id,i)=>{
+      const labels=['今日','記録','管理'];
+      const btn=el('button',{class:'nav-btn'+(state.view===id?' active':'')},labels[i]);
+      btn.addEventListener('click',()=>{state.view=id;state.showForm=false;state.selectedDate=todayKey();render();});
+      return btn;
+    }))
+  );
+}
+
+function renderToday(){
+  const dk=state.selectedDate;
+  const parts=dk.split('-');
+  const dateObj=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+  const dow=dateObj.getDay();
+  const isToday=dk===todayKey();
+
+  // date nav
+  const prevDate=new Date(dateObj);prevDate.setDate(prevDate.getDate()-1);
+  const nextDate=new Date(dateObj);nextDate.setDate(nextDate.getDate()+1);
+  const minDate=new Date();minDate.setDate(minDate.getDate()-7);
+  const canGoPrev=dateObj>minDate;
+  const canGoNext=!isToday;
+
+  const dateLabel=isToday?'今日 '+dateObj.toLocaleDateString('ja-JP',{month:'long',day:'numeric',weekday:'short'}):dateObj.toLocaleDateString('ja-JP',{month:'long',day:'numeric',weekday:'short'});
+
+  const todayHabits=state.habits.filter(h=>h.frequency==='daily'||h.days.includes(dow));
+  const done=todayHabits.filter(h=>getStatus(h.id,dk)===2).length;
+  const partial=todayHabits.filter(h=>getStatus(h.id,dk)===1).length;
+  const total=todayHabits.length;
+  const wrap=el('div',{class:'fade-in'});
+
+  // date navigation bar
+  const prevBtn=el('button',{class:'date-nav-btn'},'‹');
+  if(!canGoPrev)prevBtn.setAttribute('disabled','');
+  prevBtn.addEventListener('click',()=>{if(canGoPrev){state.selectedDate=dateKey(prevDate);render();}});
+  const nextBtn=el('button',{class:'date-nav-btn'},'›');
+  if(!canGoNext)nextBtn.setAttribute('disabled','');
+  nextBtn.addEventListener('click',()=>{if(canGoNext){state.selectedDate=dateKey(nextDate);render();}});
+  const labelWrap=el('div',{style:{textAlign:'center',flex:'1'}},
+    el('div',{class:'date-nav-label'},dateLabel),
+    !isToday?el('div',{class:'date-nav-today',onClick:()=>{state.selectedDate=todayKey();render();}},'今日に戻る'):null
+  );
+  wrap.appendChild(el('div',{class:'date-nav'},prevBtn,labelWrap,nextBtn));
+
+  wrap.appendChild(el('div',{class:'summary-card'},
+    el('div',{class:'summary-label'},isToday?'今日の進捗':dateObj.toLocaleDateString('ja-JP',{month:'long',day:'numeric'})+'の進捗'),
+    el('div',{style:{display:'flex',alignItems:'baseline',gap:'10px'}},
+      el('div',{class:'summary-value'},String(done),el('span',{},' / '+total)),
+      partial>0?el('div',{style:{fontSize:'13px',color:'#f59e0b'}},'△ '+partial):null
+    )
+  ));
+
+  Object.entries(CATS).forEach(([cat,cs])=>{
+    const catH=todayHabits.filter(h=>h.category===cat);
+    if(!catH.length)return;
+    const group=el('div',{class:'cat-group'});
+    group.appendChild(el('div',{class:'cat-label',style:{color:cs.color}},cs.icon+' '+cs.label));
+    catH.forEach(habit=>{
+      const status=getStatus(habit.id,dk);
+      const streak=getStreak(habit);
+      const item=el('div',{class:'habit-item'+(status>0?' checked':'')});
+      if(status===2){item.style.background=cs.bg;item.style.borderColor=cs.color+'40';}
+      else if(status===1){item.style.background='#1c1400';item.style.borderColor='#f59e0b40';}
+      let chkSym='',chkBorder='#334155',chkBg='transparent',chkColor='';
+      if(status===2){chkSym='✓';chkBorder=cs.color;chkBg=cs.color;chkColor='#080c10';}
+      else if(status===1){chkSym='△';chkBorder='#f59e0b';chkColor='#f59e0b';}
+      const chk=el('div',{class:'habit-check'},chkSym);
+      chk.style.borderColor=chkBorder;chk.style.background=chkBg;chk.style.color=chkColor;
+      chk.style.fontSize=status===1?'13px':'14px';
+      const nameColor=status===2?'#f1f5f9':status===1?'#fcd34d':'#94a3b8';
+      const info=el('div',{style:{flex:'1'}},
+        el('div',{class:'habit-name',style:{color:nameColor}},habit.name),
+        el('div',{class:'habit-sub'},
+          habit.frequency==='daily'?'毎日':'週'+habit.days.length+'日',
+          streak>1?el('span',{class:'streak',style:{color:cs.color}},'🔥 '+streak+'日連続'):null
+        )
+      );
+      item.appendChild(chk);item.appendChild(info);
+      let pressTimer=null;
+      item.addEventListener('pointerdown',()=>{
+        pressTimer=setTimeout(()=>{
+          pressTimer=null;
+          const curSt=getStatus(habit.id,dk);
+          if(curSt!==2){
+            if(!state.history[dk])state.history[dk]={};
+            state.history[dk][habit.id]=2;
+            save();render();
+          }
+        },500);
+      });
+      item.addEventListener('pointerup',()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;toggleForDate(habit.id,dk);}});
+      item.addEventListener('pointerleave',()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}});
+      group.appendChild(item);
+    });
+    wrap.appendChild(group);
+  });
+  if(!todayHabits.length)wrap.appendChild(el('div',{class:'empty-state'},'この日の習慣がありません'));
+  return wrap;
+}
+
+function renderHistory(){
+  const wrap=el('div',{class:'fade-in'});
+  wrap.appendChild(el('div',{style:{fontSize:'13px',color:'var(--muted)',marginBottom:'12px',display:'flex',justifyContent:'space-between',alignItems:'center'}},
+    '過去30日間の記録',
+    el('div',{style:{display:'flex',gap:'12px',fontSize:'11px'}},
+      el('span',{},'■ 達成　'),
+      el('span',{style:{color:'#f59e0b'}},'■ 一部　'),
+      el('span',{style:{color:'var(--border)'}},'■ 未実施')
+    )
+  ));
+  const days30=getLast30();const tk=todayKey();
+  state.habits.forEach(habit=>{
+    const cs=CATS[habit.category];
+    const rate=getRate(habit);
+    const rateColor=rate>=80?'#4ade80':rate>=50?'#f97316':'#ef4444';
+    const card=el('div',{class:'history-card'});
+    card.appendChild(el('div',{class:'history-header'},
+      el('div',{},
+        el('div',{class:'history-name'},habit.name),
+        el('div',{class:'history-cat',style:{color:cs.color}},cs.icon+' '+cs.label)
+      ),
+      el('div',{class:'history-rate',style:{color:rateColor}},rate+'%')
+    ));
+    const grid=el('div',{class:'cal-grid'});
+    DOWS.forEach(d=>grid.appendChild(el('div',{class:'cal-dow'},d)));
+    const firstDow=days30[0].getDay();
+    for(let i=0;i<firstDow;i++)grid.appendChild(el('div',{class:'cal-day empty'}));
+    days30.forEach(d=>{
+      const dk=dateKey(d);const dow=d.getDay();
+      const sched=habit.frequency==='daily'||habit.days.includes(dow);
+      const status=getStatus(habit.id,dk);
+      const isToday=dk===tk;
+      const cell=el('div',{class:'cal-day'+(!sched?' unscheduled':'')});
+      if(sched){
+        if(status===2)cell.style.background=cs.color;
+        else if(status===1)cell.style.background='#f59e0b';
+        else cell.style.background='var(--border)';
+      }
+      if(isToday){cell.style.borderColor=cs.color;cell.style.borderStyle='solid';}
+      cell.title=(d.getMonth()+1)+'/'+d.getDate();
+      grid.appendChild(cell);
+    });
+    card.appendChild(grid);
+    card.appendChild(el('div',{class:'history-footer'},'🔥 連続 '+getStreak(habit)+'日','達成率 '+rate+'%'));
+    wrap.appendChild(card);
+  });
+  if(!state.habits.length)wrap.appendChild(el('div',{class:'empty-state'},'習慣がまだありません'));
+  return wrap;
+}
+
+function renderForm(){
+  const f=state.form;
+  const card=el('div',{class:'form-card'});
+  card.appendChild(el('div',{class:'form-title'},state.editingId!==null?'習慣を編集':'新しい習慣'));
+  const input=el('input',{class:'form-input',placeholder:'習慣の名前',value:f.name});
+  input.addEventListener('input',e=>{state.form.name=e.target.value;});
+  card.appendChild(input);
+  card.appendChild(el('div',{class:'form-label'},'カテゴリ'));
+  const catRow=el('div',{class:'chip-row'});
+  Object.entries(CATS).forEach(([cat,cs])=>{
+    const chip=el('button',{class:'chip'},cs.icon+' '+cs.label);
+    if(f.category===cat){chip.style.borderColor=cs.color;chip.style.background=cs.bg;chip.style.color=cs.color;}
+    chip.addEventListener('click',()=>{state.form.category=cat;render();});
+    catRow.appendChild(chip);
+  });
+  card.appendChild(catRow);
+  card.appendChild(el('div',{class:'form-label'},'頻度'));
+  const freqRow=el('div',{class:'chip-row'});
+  [['daily','毎日'],['weekly','曜日指定']].forEach(([val,label])=>{
+    const chip=el('button',{class:'chip'},label);
+    if(f.frequency===val){chip.style.borderColor='#4ade80';chip.style.background='#052e16';chip.style.color='#4ade80';}
+    chip.addEventListener('click',()=>{state.form.frequency=val;state.form.days=val==='daily'?[0,1,2,3,4,5,6]:[];render();});
+    freqRow.appendChild(chip);
+  });
+  card.appendChild(freqRow);
+  if(f.frequency==='weekly'){
+    card.appendChild(el('div',{class:'form-label'},'実施する曜日'));
+    const dowRow=el('div',{class:'dow-row'});
+    DOWS.forEach((d,i)=>{
+      const btn=el('button',{class:'dow-btn'},d);
+      if(f.days.includes(i)){btn.style.borderColor='#4ade80';btn.style.background='#052e16';btn.style.color='#4ade80';}
+      btn.addEventListener('click',()=>{state.form.days=f.days.includes(i)?f.days.filter(x=>x!==i):[...f.days,i];render();});
+      dowRow.appendChild(btn);
+    });
+    card.appendChild(dowRow);
+  }
+  card.appendChild(el('div',{class:'form-actions'},
+    el('button',{class:'btn-cancel',onClick:()=>{state.showForm=false;state.editingId=null;render();}},'キャンセル'),
+    el('button',{class:'btn-save',onClick:addHabit},state.editingId!==null?'保存する':'追加する')
+  ));
+  return card;
+}
+
+function exportData(){
+  const data=JSON.stringify({habits:state.habits,history:state.history});
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(data).then(()=>{alert('クリップボードにコピーしました！');}).catch(()=>{prompt('コピーしてください：',data);});
+  }else{prompt('コピーしてください：',data);}
+}
+
+function importData(text){
+  try{
+    const parsed=JSON.parse(text.trim());
+    if(!parsed.habits||!Array.isArray(parsed.habits))throw new Error();
+    state.habits=parsed.habits;state.history=parsed.history||{};
+    state.showImport=false;save();render();alert('✅ データを復元しました！');
+  }catch(e){alert('❌ データの形式が正しくありません。');}
+}
+
+let swReg=null;
+async function initSW(){
+  if(!('serviceWorker' in navigator))return;
+  try{swReg=await navigator.serviceWorker.register('./sw.js');}catch(e){console.warn('SW failed',e);}
+}
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)){alert('このブラウザは通知に対応していません。');return;}
+  const perm=await Notification.requestPermission();
+  if(perm==='granted'){state.notifTimes.enabled=true;save();scheduleNotifications();render();alert('✅ 通知を有効にしました！');}
+  else{alert('通知が許可されませんでした。\nブラウザの設定から許可してください。');}
+}
+
+function scheduleNotifications(){
+  if(!state.notifTimes.enabled)return;
+  if(swReg){
+    caches.open('habit-tracker-v1').then(cache=>{
+      cache.put('notification-times',new Response(JSON.stringify({times:state.notifTimes.times,message:state.notifTimes.message})));
+    });
+    if('periodicSync' in swReg)swReg.periodicSync.register('check-notifications',{minInterval:60*1000}).catch(()=>{});
+  }
+  startForegroundNotifCheck();
+}
+
+let notifInterval=null;
+let lastNotifMinute='';
+function startForegroundNotifCheck(){
+  if(notifInterval)clearInterval(notifInterval);
+  notifInterval=setInterval(()=>{
+    if(!state.notifTimes.enabled||Notification.permission!=='granted')return;
+    const now=new Date();
+    const hhmm=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    if(hhmm===lastNotifMinute)return;
+    if(state.notifTimes.times.includes(hhmm)){
+      lastNotifMinute=hhmm;
+      new Notification('習慣トラッカー',{body:state.notifTimes.message||'今日の習慣を記録しましょう！',tag:'habit-'+hhmm});
+    }
+  },10000);
+}
+
+function addNotifTime(time){
+  if(!time)return;
+  if(state.notifTimes.times.includes(time))return;
+  state.notifTimes.times=[...state.notifTimes.times,time].sort();
+  save();scheduleNotifications();render();
+}
+
+function removeNotifTime(time){
+  state.notifTimes.times=state.notifTimes.times.filter(t=>t!==time);
+  save();scheduleNotifications();render();
+}
+
+function renderNotifSection(){
+  const nt=state.notifTimes;
+  const granted=('Notification' in window)&&Notification.permission==='granted';
+  const section=el('div',{class:'notif-section'});
+  section.appendChild(el('div',{class:'notif-title'},'🔔 通知設定'));
+  section.appendChild(el('div',{class:'notif-status '+(nt.enabled&&granted?'on':'off')},nt.enabled&&granted?'通知ON':'通知OFF'));
+  section.appendChild(el('div',{class:'form-label'},'通知メッセージ'));
+  const msgInput=el('input',{class:'notif-msg-input',placeholder:'今日の習慣を記録しましょう！',value:nt.message||''});
+  msgInput.addEventListener('change',e=>{state.notifTimes.message=e.target.value;save();scheduleNotifications();});
+  section.appendChild(msgInput);
+  section.appendChild(el('div',{class:'form-label'},'通知時刻'));
+  // テスト通知ボタン
+  const testBtn=el('button',{class:'btn-add-time',style:{width:'100%',marginBottom:'10px'}},'🔔 今すぐテスト通知を送る');
+  testBtn.addEventListener('click',()=>{
+    if(Notification.permission!=='granted'){alert('通知が許可されていません。');return;}
+    new Notification('習慣トラッカー テスト',{body:'通知のテストです！正常に受信できています。',tag:'test-'+Date.now()});
+    alert('通知を送信しました。画面上部に通知が届いているか確認してください。');
+  });
+  section.appendChild(testBtn);
+  if(nt.times.length>0){
+    const timesList=el('div',{class:'notif-times'});
+    nt.times.forEach(t=>{
+      const row=el('div',{class:'notif-time-row'},el('span',{class:'notif-time-label'},t),el('button',{class:'btn-del-time'},'削除'));
+      row.querySelector('.btn-del-time').addEventListener('click',()=>removeNotifTime(t));
+      timesList.appendChild(row);
+    });
+    section.appendChild(timesList);
+  }
+  const addRow=el('div',{class:'notif-add-row'});
+  const timeInput=el('input',{class:'notif-time-input',type:'time'});
+  const addBtn=el('button',{class:'btn-add-time'},'追加');
+  addBtn.addEventListener('click',()=>{addNotifTime(timeInput.value);});
+  addRow.appendChild(timeInput);addRow.appendChild(addBtn);
+  section.appendChild(addRow);
+  if(!granted){
+    const btn=el('button',{class:'btn-notif-enable'},'🔔 通知を許可する');
+    btn.addEventListener('click',requestNotifPermission);section.appendChild(btn);
+  }else if(!nt.enabled){
+    const btn=el('button',{class:'btn-notif-enable'},'🔔 通知をオンにする');
+    btn.addEventListener('click',()=>{state.notifTimes.enabled=true;save();scheduleNotifications();render();});
+    section.appendChild(btn);
+  }else{
+    const btn=el('button',{class:'btn-notif-enable',style:{background:'#1c0a00',borderColor:'#f97316',color:'#f97316'}},'通知をオフにする');
+    btn.addEventListener('click',()=>{state.notifTimes.enabled=false;save();render();});
+    section.appendChild(btn);
+  }
+  return section;
+}
+
+function renderManage(){
+  const wrap=el('div',{class:'fade-in'});
+  wrap.appendChild(renderNotifSection());
+  const ioSection=el('div',{class:'io-section'});
+  ioSection.appendChild(el('div',{class:'io-title'},'データのバックアップ・引き継ぎ'));
+  const ioRow=el('div',{class:'io-row'});
+  const expBtn=el('button',{class:'btn-export'},'📤 エクスポート');
+  expBtn.addEventListener('click',exportData);
+  const impBtn=el('button',{class:'btn-import'},'📥 インポート');
+  impBtn.addEventListener('click',()=>{state.showImport=!state.showImport;render();});
+  ioRow.appendChild(expBtn);ioRow.appendChild(impBtn);
+  ioSection.appendChild(ioRow);
+  if(state.showImport){
+    const ta=el('textarea',{class:'import-area',placeholder:'エクスポートしたテキストをここに貼り付けてください…'});
+    const okBtn=el('button',{class:'btn-import-ok'},'復元する');
+    okBtn.addEventListener('click',()=>importData(ta.value));
+    ioSection.appendChild(ta);ioSection.appendChild(okBtn);
+  }
+  wrap.appendChild(ioSection);
+  const addBtn=el('button',{class:'add-btn'},'＋ 新しい習慣を追加');
+  addBtn.addEventListener('click',()=>{state.showForm=true;render();});
+  wrap.appendChild(addBtn);
+  if(state.showForm)wrap.appendChild(renderForm());
+  state.habits.forEach(habit=>{
+    const cs=CATS[habit.category];
+    const freqLabel=habit.frequency==='daily'?'毎日':DOWS.filter((_,i)=>habit.days.includes(i)).join('・');
+    const item=el('div',{class:'manage-item'},
+      el('span',{class:'manage-icon'},cs.icon),
+      el('div',{class:'manage-info'},
+        el('div',{class:'manage-name'},habit.name),
+        el('div',{class:'manage-freq'},freqLabel)
+      ),
+      el('div',{class:'manage-actions'},
+        el('button',{class:'btn-edit',onClick:()=>startEdit(habit)},'編集'),
+        el('button',{class:'btn-delete',onClick:()=>deleteHabit(habit.id)},'削除')
+      )
+    );
+    wrap.appendChild(item);
+  });
+  return wrap;
+}
+
+function render(){
+  const app=document.getElementById('app');
+  const dk=todayKey();const dow=todayDow();
+  const todayHabits=state.habits.filter(h=>h.frequency==='daily'||h.days.includes(dow));
+  const done=todayHabits.filter(h=>getStatus(h.id,dk)===2).length;
+  const total=todayHabits.length;
+  const pct=total===0?0:Math.round(done/total*100);
+  app.innerHTML='';
+  app.appendChild(renderHeader(pct));
+  app.appendChild(renderNav());
+  const content=el('div',{class:'content'});
+  if(state.view==='today')content.appendChild(renderToday());
+  else if(state.view==='history')content.appendChild(renderHistory());
+  else content.appendChild(renderManage());
+  app.appendChild(content);
+}
+
+render();
+initSW();
+if(state.notifTimes&&state.notifTimes.enabled)scheduleNotifications();
+})();
+</script></body></html>
